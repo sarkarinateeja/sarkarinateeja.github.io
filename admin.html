@@ -1,520 +1,205 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-<!-- Playables SDK -->
-<script>// Playables SDK v1.0.0
-// Game lifecycle bridge: rAF-based game-ready detection + event communication
-(function() {
-  'use strict';
-
-  // Idempotency: skip if already initialized (e.g., server-side injection
-  // followed by client-side inject-javascript via the Bloks webview component).
-  if (window.playablesSDK) return;
-
-  var HANDLER_NAME = 'playablesGameEventHandler';
-  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
-  var RAF_FRAME_THRESHOLD = 3;
-
-  var gameReadySent = false;
-  var firstInteractionSent = false;
-  var errorSent = false;
-  var frameCount = 0;
-  var originalRAF = window.requestAnimationFrame;
-
-  // --- Transport Layer ---
-
-  function hasIOSBridge() {
-    return !!(window.webkit &&
-              window.webkit.messageHandlers &&
-              window.webkit.messageHandlers[HANDLER_NAME]);
-  }
-
-  function hasAndroidBridge() {
-    return !!(window[ANDROID_BRIDGE_NAME] &&
-              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
-  }
-
-  function isInIframe() {
-    return !!(window.parent && window.parent !== window);
-  }
-
-  function sendEvent(eventName, payload) {
-    var message = {
-      type: eventName,
-      payload: payload || {},
-      timestamp: Date.now()
-    };
-
-    if (hasIOSBridge()) {
-      try {
-        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
-      } catch (e) { /* ignore */ }
-      return;
-    }
-
-    if (hasAndroidBridge()) {
-    try {
-      var p = payload || {};
-      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
-      window[ANDROID_BRIDGE_NAME].postEvent(
-        eventName,
-        JSON.stringify(p)
-      );
-    } catch (e) { /* ignore */ }
-    return;
-  }
-
-    if (isInIframe()) {
-      try {
-        window.parent.postMessage(message, '*');
-      } catch (e) { /* ignore */ }
-      return;
-    }
-  }
-
-  // --- rAF Game-Ready Detection ---
-
-  function onFrame() {
-    if (gameReadySent) return;
-
-    frameCount++;
-    if (frameCount >= RAF_FRAME_THRESHOLD) {
-      gameReadySent = true;
-      sendEvent('game_ready', {
-        frame_count: frameCount,
-        detected_at: Date.now()
-      });
-      return;
-    }
-
-    originalRAF.call(window, onFrame);
-  }
-
-  if (originalRAF) {
-    window.requestAnimationFrame = function(callback) {
-      if (!gameReadySent) {
-        return originalRAF.call(window, function(timestamp) {
-          frameCount++;
-          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
-            gameReadySent = true;
-            sendEvent('game_ready', {
-              frame_count: frameCount,
-              detected_at: Date.now()
-            });
-          }
-          callback(timestamp);
-        });
-      }
-      return originalRAF.call(window, callback);
-    };
-  }
-
-  // --- First User Interaction Detection ---
-
-  function setupFirstInteractionDetection() {
-    var events = ['touchstart', 'mousedown', 'keydown'];
-
-    function onFirstInteraction() {
-      if (firstInteractionSent) return;
-      firstInteractionSent = true;
-      sendEvent('user_interaction_start', null);
-
-      for (var i = 0; i < events.length; i++) {
-        document.removeEventListener(events[i], onFirstInteraction, true);
-      }
-    }
-
-    for (var i = 0; i < events.length; i++) {
-      document.addEventListener(events[i], onFirstInteraction, true);
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
-  } else {
-    setupFirstInteractionDetection();
-  }
-
-  // --- Auto Error Capture ---
-
-  window.addEventListener('error', function(event) {
-    if (errorSent) return;
-    errorSent = true;
-    sendEvent('error', {
-      message: event.message || 'Unknown error',
-      source: event.filename || '',
-      lineno: event.lineno || 0,
-      colno: event.colno || 0,
-      auto_captured: true
-    });
-  });
-
-  window.addEventListener('unhandledrejection', function(event) {
-    if (errorSent) return;
-    errorSent = true;
-    var reason = event.reason;
-    sendEvent('error', {
-      message: (reason instanceof Error) ? reason.message : String(reason),
-      type: 'unhandled_promise_rejection',
-      auto_captured: true
-    });
-  });
-
-  // --- Public API ---
-
-  window.playablesSDK = {
-    complete: function(score) {
-      sendEvent('game_ended', {
-        score: score,
-        completed: true
-      });
-    },
-
-    error: function(message) {
-      if (errorSent) return;
-      errorSent = true;
-      sendEvent('error', {
-        message: message || 'Unknown error',
-        auto_captured: false
-      });
-    },
-
-    sendEvent: function(eventName, payload) {
-      if (!eventName || typeof eventName !== 'string') return;
-      sendEvent(eventName, payload);
-    }
-  };
-
-  // Kick off rAF detection in case no game code calls rAF immediately
-  if (originalRAF) {
-    originalRAF.call(window, onFrame);
-  }
-})();</script>
-<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sarkari Nateeja - Admin Panel</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin - Sarkari Nateeja</title>
 <style>
-:root{--red:#ab183d;--red-dark:#8e142f;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-600:#4b5563;--gray-800:#1f2937;}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#f5f7fa;color:#111827;line-height:1.5;-webkit-font-smoothing:antialiased}
-header{background:var(--red);color:#fff;padding:18px 24px;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(171,24,61,.25)}
-header h1{font-size:22px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
-header h1 svg{width:26px;height:26px}
-.container{max-width:1100px;margin:28px auto;padding:0 16px}
-.card{background:#fff;border-radius:14px;padding:24px;margin-bottom:22px;border:1px solid #eceff3;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.card h2{font-size:17px;font-weight:650;margin-bottom:18px;color:#111827;display:flex;align-items:center;gap:8px}
-.card h2 .count{background:var(--gray-100);color:var(--gray-600);padding:2px 8px;border-radius:20px;font-size:12px;font-weight:600}
-label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
-label span.req{color:var(--red);margin-left:2px}
-input[type="text"],input[type="url"],input[type="date"],select,textarea{width:100%;padding:11px 13px;border:1px solid #d1d5db;border-radius:9px;font-size:14px;background:#fff;transition:.15s;font-family:inherit}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(171,24,61,.12)}
-textarea{resize:vertical;line-height:1.6}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:800px){.grid{grid-template-columns:1fr}}
-.field{margin-bottom:14px}
-.hint{font-size:12px;color:#6b7280;margin-top:5px}
-.checkbox{display:flex;align-items:center;gap:10px;margin:16px 0;padding:12px;background:var(--gray-50);border-radius:9px;border:1px solid #eef0f3}
-.checkbox input{width:18px;height:18px;accent-color:var(--red);cursor:pointer}
-.checkbox label{margin:0;font-weight:500;cursor:pointer}
-.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;padding-top:16px;border-top:1px solid #f0f2f5}
-button{padding:10px 18px;border-radius:9px;border:none;font-weight:600;font-size:14px;cursor:pointer;transition:.18s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
-button:active{transform:translateY(1px)}
-.btn-primary{background:var(--red);color:#fff}
-.btn-primary:hover{background:var(--red-dark)}
-.btn-secondary{background:#6b7280;color:#fff}
-.btn-secondary:hover{background:#525b6a}
-.btn-success{background:#059669;color:#fff}
-.btn-success:hover{background:#047857}
-.btn-outline{background:#fff;color:#374151;border:1px solid #d1d5db}
-.btn-outline:hover{background:var(--gray-50)}
-.btn-danger{background:#dc2626;color:#fff}
-.btn-danger:hover{background:#b91c1c}
-.btn-sm{padding:6px 12px;font-size:13px;border-radius:7px}
-.posts-list{display:flex;flex-direction:column;gap:10px;max-height:520px;overflow-y:auto;padding-right:4px}
-.post{display:flex;justify-content:space-between;gap:12px;padding:14px;border:1px solid #eaecef;border-radius:10px;background:#fff;transition:.15s}
-.post:hover{border-color:#d6dae1;background:#fcfcfd}
-.post-main{flex:1;min-width:0}
-.post-title{font-weight:600;font-size:14px;color:#111827;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.post-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--gray-600);align-items:center}
-.post-meta .link{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.badge{background:#fee2e2;color:#991b1b;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.3px}
-.badge.jobs{background:#dbeafe;color:#1e40af}
-.badge.results{background:#dcfce7;color:#166534}
-.badge.admit{background:#fef3c7;color:#92400e}
-.badge.answer{background:#f3e8ff;color:#6b21a8}
-.badge.syllabus{background:#e0e7ff;color:#3730a3}
-.badge.admission{background:#ffe4e6;color:#9f1239}
-.tag-new{background:var(--red);color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px}
-.post-actions{display:flex;gap:6px;align-items:flex-start}
-.empty{text-align:center;padding:40px 20px;color:#6b7280;font-size:14px}
-.empty svg{width:44px;height:44px;color:#d1d5db;margin:0 auto 12px}
-#jsonOutput{width:100%;height:320px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;padding:14px;background:#0b1020;color:#e2e8f0;border-radius:10px;border:1px solid #1e293b}
-.export-info{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px 14px;border-radius:9px;font-size:13px;margin-top:12px;display:flex;gap:10px}
-.export-info svg{flex-shrink:0;margin-top:1px}
-.divider{height:1px;background:#f0f2f5;margin:18px 0}
-#toast{position:fixed;top:20px;right:20px;background:#111827;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transform:translateY(-10px);transition:.25s;z-index:9999;pointer-events:none}
-#toast.show{opacity:1;transform:translateY(0)}
-#article{min-height:400px}
-.file-note{font-size:12px;color:#6b7280;margin-top:6px}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial;background:#f5f5f5}
+.header{background:#ab183d;color:#fff;padding:12px;text-align:center}
+.logo{display:flex;align-items:center;justify-content:center;gap:10px}
+.logo svg{width:45px;height:45px;background:#fff;border-radius:50%;padding:3px}
+.logo h1{font-size:24px}
+.wrap{max-width:1000px;margin:15px auto;padding:0 10px}
+.box{background:#fff;border:2px solid #ddd;margin-bottom:15px}
+.box-h{background:#ab183d;color:#fff;padding:10px;font-weight:bold}
+.box-b{padding:15px}
+input,select,textarea{width:100%;padding:9px;margin:6px 0;border:1px solid #ccc;border-radius:4px;font-family:Arial;font-size:14px}
+textarea{resize:vertical}
+label{font-weight:bold;font-size:13px;color:#333;display:block;margin-top:8px}
+.btn{background:#ab183d;color:#fff;border:0;padding:10px 18px;border-radius:4px;cursor:pointer;font-weight:bold;margin-right:8px}
+.btn:hover{background:#8a122f}
+.btn-g{background:#088808}
+.post-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eee;font-size:14px}
+.post-item b{color:#ab183d}
+.small{font-size:12px;color:#666}
+.alert{padding:10px;margin:10px 0;border-radius:4px;font-size:14px}
+.alert-ok{background:#e8f5e9;color:#2e7d32;border-left:4px solid #2e7d32}
+.alert-err{background:#ffebee;color:#c62828;border-left:4px solid #c62828}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header>
-  <h1>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 0 0 0-1.82-.33 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 0 0 0 9 19.4a1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    Sarkari Nateeja - Admin Panel
-  </h1>
+<header class="header">
+<div class="logo">
+<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#fff" stroke="#ab183d" stroke-width="2"/><path d="M50 5 A45 45 0 0 1 50 95" fill="#FF9933"/><path d="M50 5 A45 45 0 0 0 50 95" fill="#138808"/><circle cx="50" cy="50" r="26" fill="#fff"/></svg>
+<div><h1>SARKARI NATEEJA</h1><div style="font-size:11px">Admin Panel</div></div>
+</div>
 </header>
 
-<div class="container">
-  <div class="card">
-    <h2 id="formTitle">Create New Post</h2>
-    <form id="postForm">
-      <div class="grid">
-        <div class="field">
-          <label for="title">Title <span class="req">*</span></label>
-          <input type="text" id="title" required placeholder="e.g., SSC CGL 2024 Notification Out">
-        </div>
-        <div class="field">
-          <label for="category">Category <span class="req">*</span></label>
-          <select id="category" required>
-            <option value="">Select Category</option>
-            <option>Latest Jobs</option>
-            <option>Results</option>
-            <option>Admit Card</option>
-            <option>Answer Key</option>
-            <option>Syllabus</option>
-            <option>Admission</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="date">Date <span class="req">*</span></label>
-          <input type="date" id="date" required>
-        </div>
-        <div class="field">
-          <label for="link">Official Link <span class="req">*</span></label>
-          <input type="url" id="link" required placeholder="https://ssc.nic.in/...">
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="article">Full Article / Blog</label>
-        <textarea id="article" placeholder="Write 1000-2000 words full article here. You can use HTML tags like &lt;h3&gt;, &lt;b&gt;, &lt;p&gt;, &lt;br&gt;, &lt;ul&gt;, &lt;li&gt;"></textarea>
-        <div class="file-note">Supports full HTML formatting for detailed post page</div>
-      </div>
-
-      <div class="field">
-        <label for="importantLinks">Important Links</label>
-        <textarea id="importantLinks" rows="4" placeholder="Apply Online|https://example.com/apply&#10;Download Notification|https://example.com/pdf&#10;Official Website|https://example.com"></textarea>
-        <div class="hint">Each line format: Text|URL (one per line)</div>
-      </div>
-
-      <div class="checkbox">
-        <input type="checkbox" id="isNew">
-        <label for="isNew">Mark as NEW (shows NEW badge on website)</label>
-      </div>
-
-      <div class="btn-row">
-        <button type="submit" class="btn-primary" id="saveBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Save Post
-        </button>
-        <button type="button" class="btn-outline" id="clearBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          Clear Form
-        </button>
-        <button type="button" class="btn-success" id="exportBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export JSON
-        </button>
-      </div>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2>Saved Posts <span class="count" id="count">0</span></h2>
-    <div id="postsList" class="posts-list"></div>
-  </div>
-
-  <div class="card" id="exportSection" style="display:none">
-    <h2>Export JSON for GitHub</h2>
-    <textarea id="jsonOutput" readonly></textarea>
-    <div class="btn-row" style="border:none;padding-top:12px">
-      <button class="btn-primary" id="copyBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copy to Clipboard
-      </button>
-    </div>
-    <div class="export-info">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-      <div><strong>Copy this JSON and paste into your GitHub data.json file</strong><br>Replace the entire content of data.json with this exported data.</div>
-    </div>
-  </div>
+<div class="wrap">
+<!-- GitHub Settings -->
+<div class="box">
+<div class="box-h">⚙️ GitHub Settings (Ek baar bharo)</div>
+<div class="box-b">
+<div class="grid2">
+<div><label>GitHub Username</label><input id="ghUser" placeholder="sarkarinateeja"></div>
+<div><label>Repo Name</label><input id="ghRepo" placeholder="sarkarinateeja.github.io"></div>
+</div>
+<label>Personal Access Token (repo permission)</label><input id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxx">
+<button class="btn" onclick="saveGH()">Save Settings</button>
+<span id="ghStatus" class="small"></span>
+<div class="small" style="margin-top:8px">Token kaise banaye: GitHub → Settings → Developer settings → Tokens (classic) → Generate → repo tick karo</div>
+</div>
 </div>
 
-<div id="toast"></div>
+<!-- Add Post -->
+<div class="box">
+<div class="box-h">📝 Naya Post / Edit Post</div>
+<div class="box-b">
+<form id="form" onsubmit="savePost(event)">
+<input type="hidden" id="pid">
+<label>Title *</label><input id="ptitle" required placeholder="RRB NTPC Result 2024 Declared">
+<div class="grid2">
+<div><label>Category *</label>
+<select id="pcat" required><option>Latest Jobs</option><option>Results</option><option>Admit Card</option><option>Answer Key</option><option>Syllabus</option><option>Admission</option></select></div>
+<div><label>Date</label><input id="pdate" type="date"></div>
+</div>
+<label>Official Link</label><input id="plink" type="url" placeholder="https://">
+<label>Full Article / Blog (1000-2000 words) *</label>
+<textarea id="particle" rows="14" required placeholder="Yahan pura article likhein...
+
+Example:
+RRB NTPC ka result aaj jari hua hai...
+
+Important Dates:
+- ...
+
+Kaise check karein:
+1. ...
+2. ...
+
+HTML tags use kar sakte hain: <h3>, <b>, <br>"></textarea>
+<label>Important Links (Har line: Text|URL)</label>
+<textarea id="plinks" rows="3" placeholder="Check Result|https://example.com/result
+Download PDF|https://example.com/pdf"></textarea>
+<label><input type="checkbox" id="pnew" checked> Mark as NEW (Breaking news + blink)</label>
+<br><br>
+<button type="submit" class="btn">💾 Save Locally</button>
+<button type="button" class="btn btn-g" onclick="publishGitHub()">🚀 Publish to GitHub</button>
+<button type="button" class="btn" style="background:#666" onclick="clearForm()">Clear</button>
+</form>
+<div id="msg"></div>
+</div>
+
+<!-- Posts List -->
+<div class="box">
+<div class="box-h">📋 Saved Posts (<span id="count">0</span>)</div>
+<div class="box-b" style="padding:0">
+<div id="list"></div>
+</div>
+</div>
+</div>
 
 <script>
-(function(){
-  const $ = id => document.getElementById(id);
-  const STORAGE_KEY = 'sarkari_nateeja_posts';
-  let posts = [];
-  let editIndex = -1;
+let posts = JSON.parse(localStorage.getItem('sn_admin_posts')||'[]');
+const $=id=>document.getElementById(id);
 
-  function loadPosts(){
-    try{ posts = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }catch(e){ posts=[]; }
-  }
-  function savePosts(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(posts)); }
-  function showToast(msg){
-    const t = $('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 2400);
-  }
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-  function badgeClass(cat){
-    const c = (cat||'').toLowerCase();
-    if(c.includes('job')) return 'jobs';
-    if(c.includes('result')) return 'results';
-    if(c.includes('admit')) return 'admit';
-    if(c.includes('answer')) return 'answer';
-    if(c.includes('syllabus')) return 'syllabus';
-    if(c.includes('admission')) return 'admission';
-    return '';
-  }
-  function resetForm(){
-    $('postForm').reset();
-    editIndex = -1;
-    $('formTitle').textContent = 'Create New Post';
-    $('saveBtn').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Post';
-    $('date').valueAsDate = new Date();
-    $('isNew').checked = true;
-    $('title').focus();
-  }
-  function render(){
-    $('count').textContent = posts.length;
-    const list = $('postsList');
-    if(posts.length === 0){
-      list.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg><div>No posts saved yet</div><div style="font-size:12px;margin-top:4px">Create your first post using the form above</div></div>';
-      return;
-    }
-    list.innerHTML = posts.map((p,i)=>`
-      <div class="post">
-        <div class="post-main">
-          <div class="post-title">
-            ${escapeHtml(p.t)}
-            ${p.n === 'TRUE' ? '<span class="tag-new">NEW</span>' : ''}
-          </div>
-          <div class="post-meta">
-            <span class="badge ${badgeClass(p.c)}">${escapeHtml(p.c)}</span>
-            <span>${p.d}</span>
-            <span class="link" title="${escapeHtml(p.l)}">${escapeHtml(p.l)}</span>
-          </div>
-        </div>
-        <div class="post-actions">
-          <button class="btn-sm btn-outline" onclick="editPost(${i})">Edit</button>
-          <button class="btn-sm btn-danger" onclick="deletePost(${i})">Delete</button>
-        </div>
-      </div>
-    `).join('');
-  }
+function loadGH(){
+  $('ghUser').value = localStorage.getItem('gh_user')||'';
+  $('ghRepo').value = localStorage.getItem('gh_repo')||'sarkarinateeja.github.io';
+  $('ghToken').value = localStorage.getItem('gh_token')||'';
+  $('ghStatus').textContent = localStorage.getItem('gh_token')?'✓ Saved':'';
+}
+function saveGH(){
+  localStorage.setItem('gh_user',$('ghUser').value.trim());
+  localStorage.setItem('gh_repo',$('ghRepo').value.trim());
+  localStorage.setItem('gh_token',$('ghToken').value.trim());
+  $('ghStatus').textContent='✓ Saved'; alert('Settings saved!');
+}
+loadGH();
 
-  window.editPost = function(i){
-    const p = posts[i];
-    if(!p) return;
-    editIndex = i;
-    $('title').value = p.t || '';
-    $('category').value = p.c || '';
-    $('date').value = p.d || '';
-    $('link').value = p.l || '';
-    $('article').value = p.a || '';
-    $('importantLinks').value = p.links || '';
-    $('isNew').checked = p.n === 'TRUE';
-    $('formTitle').textContent = 'Edit Post';
-    $('saveBtn').innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Update Post';
-    window.scrollTo({top:0,behavior:'smooth'});
-    showToast('Editing post');
+function render(){
+  $('count').textContent = posts.length;
+  $('list').innerHTML = posts.map(p=>`
+    <div class="post-item">
+      <div><b>${p.t}</b><br><span class="small">${p.c} | ${p.d} ${p.n==='TRUE'?'<span style="color:red">• NEW</span>':''}</span></div>
+      <div><button onclick="editPost(${p.id})" class="btn" style="padding:5px 10px;font-size:12px">Edit</button>
+      <button onclick="delPost(${p.id})" class="btn" style="padding:5px 10px;font-size:12px;background:#c62828">Del</button></div>
+    </div>`).join('') || '<div style="padding:15px;color:#999">No posts yet</div>';
+  $('pdate').valueAsDate = new Date();
+}
+render();
+
+function clearForm(){$('form').reset();$('pid').value='';$('pdate').valueAsDate=new Date();$('pnew').checked=true}
+
+function savePost(e){
+  e.preventDefault();
+  const p={
+    id: Number($('pid').value)||Date.now(),
+    t:$('ptitle').value.trim(),
+    c:$('pcat').value,
+    d:$('pdate').value,
+    l:$('plink').value.trim(),
+    a:$('particle').value.trim(),
+    links:$('plinks').value.trim(),
+    n:$('pnew').checked?'TRUE':'FALSE'
   };
+  posts = posts.filter(x=>x.id!==p.id);
+  posts.unshift(p);
+  localStorage.setItem('sn_admin_posts',JSON.stringify(posts));
+  showMsg('✓ Post saved locally. Ab "Publish to GitHub" dabao.','ok');
+  clearForm(); render();
+}
 
-  window.deletePost = function(i){
-    const p = posts[i];
-    if(!p) return;
-    if(confirm('Delete "'+p.t+'"? This cannot be undone.')){
-      posts.splice(i,1);
-      savePosts();
-      render();
-      showToast('Post deleted');
-      if(editIndex === i) resetForm();
-    }
-  };
+function editPost(id){
+  const p=posts.find(x=>x.id===id); if(!p)return;
+  $('pid').value=p.id; $('ptitle').value=p.t; $('pcat').value=p.c; $('pdate').value=p.d;
+  $('plink').value=p.l; $('particle').value=p.a; $('plinks').value=p.links||''; $('pnew').checked=p.n==='TRUE';
+  window.scrollTo(0,0);
+}
+function delPost(id){if(!confirm('Delete?'))return; posts=posts.filter(x=>x.id!==id);localStorage.setItem('sn_admin_posts',JSON.stringify(posts));render();}
 
-  $('postForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    const post = {
-      c: $('category').value.trim(),
-      t: $('title').value.trim(),
-      l: $('link').value.trim(),
-      n: $('isNew').checked ? 'TRUE' : 'FALSE',
-      d: $('date').value,
-      a: $('article').value,
-      links: $('importantLinks').value.trim()
-    };
-    if(!post.t || !post.c || !post.d || !post.l){
-      alert('Please fill all required fields');
-      return;
-    }
-    if(editIndex >= 0){
-      posts[editIndex] = post;
-      showToast('Post updated successfully');
+function showMsg(t,ty){$('msg').innerHTML=`<div class="alert alert-${ty==='ok'?'ok':'err'}">${t}</div>`;setTimeout(()=>$('msg').innerHTML='',5000)}
+
+async function publishGitHub(){
+  const user=$('ghUser').value.trim(), repo=$('ghRepo').value.trim(), token=$('ghToken').value.trim();
+  if(!user||!repo||!token){alert('Pehle GitHub settings bharo');return}
+  if(posts.length===0){alert('Koi post nahi hai');return}
+  
+  showMsg('⏳ GitHub pe upload ho raha hai...','ok');
+  
+  const content = {items: posts.map(({id,...rest})=>rest)};
+  const body = JSON.stringify(content,null,2);
+  const b64 = btoa(unescape(encodeURIComponent(body)));
+  
+  try{
+    // Get current file sha
+    let sha=null;
+    const getRes = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/data.json`,{
+      headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(getRes.ok){const data=await getRes.json(); sha=data.sha;}
+    
+    // Upload
+    const putRes = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/data.json`,{
+      method:'PUT',
+      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        message:`Update posts - ${new Date().toLocaleString('hi-IN')}`,
+        content:b64,
+        sha:sha
+      })
+    });
+    
+    if(putRes.ok){
+      showMsg('✅ SUCCESS! GitHub pe update ho gaya. 1-2 minute me website pe dikhega.','ok');
     }else{
-      posts.unshift(post);
-      showToast('Post saved successfully');
+      const err=await putRes.json(); showMsg('❌ Error: '+(err.message||'Upload failed'),'err');
     }
-    savePosts();
-    render();
-    resetForm();
-    $('exportSection').style.display = 'none';
-  });
-
-  $('clearBtn').addEventListener('click', function(){
-    if(confirm('Clear form? Unsaved changes will be lost.')){
-      resetForm();
-    }
-  });
-
-  $('exportBtn').addEventListener('click', function(){
-    if(posts.length === 0){
-      alert('No posts to export. Create at least one post first.');
-      return;
-    }
-    const data = { items: posts };
-    const json = JSON.stringify(data, null, 2);
-    $('jsonOutput').value = json;
-    $('exportSection').style.display = 'block';
-    $('exportSection').scrollIntoView({behavior:'smooth', block:'start'});
-    showToast('JSON generated');
-  });
-
-  $('copyBtn').addEventListener('click', async function(){
-    const txt = $('jsonOutput').value;
-    try{
-      await navigator.clipboard.writeText(txt);
-      this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
-      showToast('Copied to clipboard');
-      setTimeout(()=>{ this.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy to Clipboard'; }, 2000);
-    }catch(err){
-      $('jsonOutput').select();
-      document.execCommand('copy');
-      showToast('Copied');
-    }
-  });
-
-  // Init
-  loadPosts();
-  render();
-  resetForm();
-})();
+  }catch(e){showMsg('❌ Network error: '+e.message,'err')}
+}
 </script>
 </body>
 </html>
