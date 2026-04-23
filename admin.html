@@ -373,7 +373,7 @@ async function loadFromGitHub(){
   const cfg=getConfig();
   document.getElementById('pubStatus').textContent='Loading from GitHub...';
   try{
-    const res=await fetch(`https://api.github.com/repos/${cfg.u}/sarkarinateeja/contents/data.json`,{
+    const res=await fetch(`https://api.github.com/repos/${cfg.u}/sarkarinateeja.github.io/contents`,{
       headers:{
         'Authorization':`Bearer ${cfg.t}`,
         'Accept':'application/vnd.github+json'
@@ -404,7 +404,7 @@ async function publishToGitHub(){
   document.getElementById('pubStatus').textContent='Publishing...';
   try{
     // First get latest SHA
-    const getRes=await fetch(`https://api.github.com/repos/${cfg.u}/sarkarinateeja/contents/data.json`,{
+    const getRes=await fetch(`https://api.github.com/repos/${cfg.u}/sarkarinateeja.github.io/contents`,{
       headers:{'Authorization':`Bearer ${cfg.t}`,'Accept':'application/vnd.github+json'}
     });
     if(!getRes.ok) throw new Error('SHA fetch failed');
@@ -415,7 +415,7 @@ async function publishToGitHub(){
     const jsonStr=JSON.stringify(json,null,2);
     const encoded=toBase64(jsonStr);
 
-    const putRes=await fetch(`https://api.github.com/repos/${cfg.u}/sarkarinateeja/contents/data.json`,{
+    const putRes=await fetch(`https://api.github.com/repos/${cfg.u}/sarkarinateeja.github.io/contents`,{
       method:'PUT',
       headers:{
         'Authorization':`Bearer ${cfg.t}`,
