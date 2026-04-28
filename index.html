@@ -341,7 +341,7 @@ function render(){
     if(!el) return;
     const catItems=posts.filter(x=>x.c===cat).slice(0,8);
     el.innerHTML=catItems.length
-      ? catItems.map(x=>`<li><a href="#" onclick="openArticle(${x.id});return false">${x.t}</a>${x.n==='TRUE'?'<span class="new">NEW</span>':''}</li>`).join('')
+      ? catItems.map(x=>`<li><a href="post.html?id=${x.id}">${x.t}</a>${x.n==='TRUE'?'<span class="new">NEW</span>':''}</li>`).join('')
       : '<li style="color:#999">Coming soon</li>';
   });
 
