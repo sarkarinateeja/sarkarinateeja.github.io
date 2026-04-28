@@ -232,39 +232,7 @@ function showHome(){
 // =============================================
 let posts = JSON.parse(localStorage.getItem('sn_posts') || '[]');
 
-// Load sample data if empty
-if(posts.length === 0){
-  posts = [
-    {id:1,c:'Latest Jobs',t:'RRB NTPC Graduate Level 2024 - 8113 Posts',d:'2024-12-01',l:'https://rrbapply.gov.in',n:'TRUE',a:`<h3>RRB NTPC 2024 Notification Out</h3>
-<p>Railway Recruitment Board ne NTPC Graduate Level ke liye 8113 posts ka notification jari kiya hai. Ye sabse bada railway sarkari naukri hai 2024 me.</p>
-<h3>Important Dates</h3>
-<p><b>Online Apply Start:</b> 01 December 2024<br><b>Last Date:</b> 31 December 2024<br><b>Exam Date:</b> February 2025</p>
-<h3>Vacancy Details</h3>
-<p>Total 8113 posts alag-alag zones me. Station Master, Goods Guard, Junior Accounts Assistant jaise posts shamil hain.</p>
-<h3>Eligibility</h3>
-<p>Graduation kisi bhi recognized university se. Age 18-33 years (OBC/SC/ST ko relaxation).</p>
-<h3>Application Fee</h3>
-<p>General/OBC: ₹500 (₹400 refund after exam)<br>SC/ST/PH/Female: ₹250 (full refund)</p>
-<h3>Selection Process</h3>
-<p>1. CBT Stage 1 (100 questions)<br>2. CBT Stage 2 (120 questions)<br>3. Typing Test<br>4. Document Verification</p>
-<h3>Kaise Apply Karein</h3>
-<p>Official website par jayein, registration karein, form bharein, documents upload karein, fee pay karein. Form submit karne se pehle preview jarur dekhein.</p>`,links:'Apply Online|https://rrbapply.gov.in
-Download Notification|https://rrb.gov.in/notif.pdf
-Official Website|https://indianrailways.gov.in'},
-    {id:2,c:'Results',t:'UP Police Constable Final Result 2024 Declared',d:'2024-11-28',l:'https://uppbpb.gov.in',n:'TRUE',a:`<h3>UP Police Constable Result 2024</h3>
-<p>Uttar Pradesh Police Recruitment Board ne constable bharti 2024 ka final result jari kar diya hai. Total 60,244 posts ke liye result available hai.</p>
-<h3>Kaise Check Karein</h3>
-<p>1. Official website uppbpb.gov.in par jayein<br>2. "Constable Result 2024" link par click karein<br>3. Registration number aur DOB enter karein<br>4. Result download karein</p>
-<h3>Cut Off Marks</h3>
-<p>General: 210.5<br>OBC: 198.3<br>SC: 185.7<br>ST: 172.4</p>
-<p>Result PDF me apna roll number Ctrl+F se search karein. Selected candidates ko document verification ke liye bulaya jayega.</p>`,links:'Download Result|https://uppbpb.gov.in/result.pdf
-Check Cutoff|https://uppbpb.gov.in/cutoff'},
-    {id:3,c:'Admit Card',t:'SSC CGL Tier 1 Admit Card 2024 Out',d:'2024-11-25',l:'https://ssc.nic.in',n:'FALSE',a:`<h3>SSC CGL 2024 Admit Card</h3>
-<p>Staff Selection Commission ne CGL Tier 1 exam ke admit card jari kar diye hain. Exam 9-26 December 2024 tak hogi.</p>
-<h3>Download Process</h3>
-<p>SSC ki regional website par jayein, registration number aur password se login karein, admit card download karein. Printout nikal kar exam center le jayein.</p>`,links:'Download Admit Card|https://ssc.nic.in/admit'}
-  ];
-  localStorage.setItem('sn_posts', JSON.stringify(posts));
+if(posts.length === 0){ posts = []; }
 }
 
 function fmt(d){if(!d)return'';const p=d.split('-');return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:d}
